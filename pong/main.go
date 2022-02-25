@@ -1,17 +1,19 @@
 package main
 
 import (
-	"math/rand"
 	"fmt"
 	"image/color"
 	"log"
+	"math/rand"
 	"os"
+	"strconv"
 	"time"
 
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text"
@@ -39,8 +41,12 @@ var (
 
   playerOneScore = 0
   playerTwoScore = 0
+  servingPlayer = 1
+  winningPlayer int
 
   gameState = "start"
+
+  justServed bool
 
   playerOne Paddle
   playerTwo Paddle
@@ -56,40 +62,59 @@ func (g *Game) Update() error {
 	}
   
   if inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
+    fmt.Println("keypress happened", gameState)
     if gameState == "start" {
+      gameState = "serve"
+    } else if gameState == "serve" {
+
+      if servingPlayer == 1 {
+        ball.dx = 100
+      } else {
+        ball.dx = -100
+      }
+
+      ball.dy = float64(rand.Intn(50 - (-50)) + (-50) * 1.5)
       gameState = "play"
-    } else {
+      justServed = true
+      fmt.Println("setting game state to play")
+    } else if gameState == "victory" {
+
       gameState = "start"
+      playerOneScore = 0
+      playerTwoScore = 0
+      servingPlayer = 1
 
       ball.Reset()
 
     }
 
-    if rand.Intn(10 - 1) + 1 > 5 {
-      ball.dx = 100 
-    } else {
-      ball.dx = -100
-    }
-    ball.dy = float64(rand.Intn(50 - (-50)) + (-50) * 1.5)
 
   }
 
-
-	if ebiten.IsKeyPressed(ebiten.KeyW) {
-    playerOne.dy = -paddleSpeed
+  if ebiten.IsKeyPressed(ebiten.KeyW) {
+      playerOne.dy = -paddleSpeed
   } else if ebiten.IsKeyPressed(ebiten.KeyS) {
-    playerOne.dy = paddleSpeed
+      playerOne.dy = paddleSpeed
   } else {
     playerOne.dy = 0
   }
 
-	if ebiten.IsKeyPressed(ebiten.KeyUp) {
-    playerTwo.dy = -paddleSpeed
+  if ball.x <= screenWidth/2 && !(servingPlayer == 2 && justServed == true) {
+    playerOne.dy = 0
+  }
+
+  if ebiten.IsKeyPressed(ebiten.KeyUp) {
+      playerTwo.dy = -paddleSpeed
   } else if ebiten.IsKeyPressed(ebiten.KeyDown) {
-    playerTwo.dy = paddleSpeed
+      playerTwo.dy = paddleSpeed
   } else {
     playerTwo.dy = 0
   }
+
+  if ball.x >= screenWidth/2 && !(servingPlayer == 1 && justServed == true) {
+    playerTwo.dy = 0
+  }
+
 
 
   if gameState == "play" {
@@ -103,42 +128,76 @@ func (g *Game) Update() error {
 
   if ball.IsColliding(playerOne) {
     ball.x = playerOne.x + playerOne.width
-    ball.dx = -ball.dx * 1.2
+    ball.dx = -ball.dx * 1.03
+    justServed = false
     // ball.dy = float64(rand.Intn(50 - (-50)) + (-50) * 1.5)
   }
 
   if ball.IsColliding(playerTwo) {
     ball.x = playerTwo.x - ball.radius
-    ball.dx = -ball.dx * 1.2
+    ball.dx = -ball.dx * 1.03
+    justServed = false
     // ball.dy = float64(rand.Intn(50 - (-50)) + (-50) * 1.5)
   }
 
   if ball.y < 0 {
     ball.y = 0
     ball.dy = -ball.dy
-    fmt.Println("switch1")
   }
 
   if ball.y + ball.radius > screenHeight {
     ball.y = screenHeight - ball.radius
     ball.dy = -ball.dy
-    fmt.Println("switch2")
   }
 
+
+  if ball.x < 0 {
+    playerOneScore += 1
+    servingPlayer = 2
+    gameState = "serve"
+    ball.Reset()
+  }
+
+  if ball.x > screenWidth {
+    playerTwoScore += 1
+    servingPlayer = 1
+    gameState = "serve"
+    ball.Reset()
+  }
+
+  if playerOneScore >= 5  {
+    gameState = "victory"
+    winningPlayer = 1
+  }
+
+  if playerTwoScore >= 5 {
+    gameState = "victory"
+    winningPlayer = 2
+  }
 
   return nil
 
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-  /* fmt.Println("fps", ebiten.CurrentFPS())
-  fmt.Println("tps", ebiten.CurrentTPS()) */
 
 
   screen.Clear()
 
+  ebitenutil.DebugPrint(screen, strconv.FormatFloat(ebiten.CurrentFPS(), 'f', 1, 32))
+
+  
   // title
-	str := "Hello " + gameState
+	str := gameState
+
+  if gameState == "serve" {
+    str = gameState + " " + fmt.Sprint(servingPlayer)
+  }
+
+  if gameState == "victory" {
+    str = "player " +fmt.Sprint(winningPlayer) + " won"
+  }
+
 	x := (screenWidth - len(str)*fontSizeSmall) / 2
 	text.Draw(screen, str, arcadeFontSmall, x, 20, color.White)
 
