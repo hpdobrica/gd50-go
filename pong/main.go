@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"image/color"
 	"log"
-	"math/rand"
-	"os"
+"math/rand"
+"os"
 	"strconv"
 	"time"
 
@@ -99,9 +99,6 @@ func (g *Game) Update() error {
     playerOne.dy = 0
   }
 
-  if ball.x <= screenWidth/2 && !(servingPlayer == 2 && justServed == true) {
-    playerOne.dy = 0
-  }
 
   if ebiten.IsKeyPressed(ebiten.KeyUp) {
       playerTwo.dy = -paddleSpeed
@@ -111,6 +108,19 @@ func (g *Game) Update() error {
     playerTwo.dy = 0
   }
 
+  // enable ai oponnent
+  // if playerTwo.y + playerTwo.height/2 < ball.y {
+    // playerTwo.dy = paddleSpeed
+  // } else if playerTwo.y + playerTwo.height/2 > ball.y  {
+    // playerTwo.dy = -paddleSpeed
+  // } else {
+    // playerTwo.dy = 0
+  // }
+
+  // block controls when ball comes to your side of the screen
+  if ball.x <= screenWidth/2 && !(servingPlayer == 2 && justServed == true) {
+    playerOne.dy = 0
+  }
   if ball.x >= screenWidth/2 && !(servingPlayer == 1 && justServed == true) {
     playerTwo.dy = 0
   }
