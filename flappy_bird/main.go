@@ -44,8 +44,8 @@ func (g Game) Update() error {
 
 	bird.Update()
 
-	for _, pipe := range pipeManager.pipes {
-		pipe.Update()
+	for _, pipePair := range pipeManager.pipePairs {
+		pipePair.Update()
 	}
 
 	pipeManager.ManageLifecycle()
@@ -60,8 +60,8 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 func (g *Game) Draw(screen *ebiten.Image) {
 
 	drawBackground(screen)
-	for _, pipe := range pipeManager.pipes {
-		pipe.Draw(screen)
+	for _, pipePair := range pipeManager.pipePairs {
+		pipePair.Draw(screen)
 	}
 	drawGround(screen)
 

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"math/rand"
-
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -18,25 +16,32 @@ type Pipe struct {
 	width  int
 	height int
 
+	orientation string
+
 	dy float64
 }
 
-func NewPipe() Pipe {
+func NewPipe(y float64, orientation string) Pipe {
 	image := assets.getImage("assets/pipe.png")
 	width, height := image.Size()
 	return Pipe{
-		image:  image,
-		x:      screenWidth,
-		y:      float64(rand.Intn(int(pipeHeightMax-pipeHeightMin)) + int(pipeHeightMin)),
-		width:  width,
-		height: height,
-		dy:     0,
+		image:       image,
+		x:           screenWidth,
+		y:           y,
+		width:       width,
+		height:      height,
+		dy:          0,
+		orientation: orientation,
 	}
 
 }
 
 func (p Pipe) Draw(screen *ebiten.Image) {
 	opts := &ebiten.DrawImageOptions{}
+	if p.orientation == "top" {
+		opts.GeoM.Scale(1, -1)
+		// opts.GeoM.Translate(0, float64(p.height))
+	}
 	opts.GeoM.Translate(float64(p.x), float64(p.y))
 	screen.DrawImage(p.image, opts)
 
