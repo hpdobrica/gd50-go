@@ -24,10 +24,19 @@ type Pipe struct {
 func NewPipe(y float64, orientation string) Pipe {
 	image := assets.getImage("assets/pipe.png")
 	width, height := image.Size()
+
+	var pipeY float64
+
+	if orientation == "top" {
+		pipeY = y - float64(height)
+	} else {
+		pipeY = y
+	}
+
 	return Pipe{
 		image:       image,
 		x:           screenWidth,
-		y:           y,
+		y:           pipeY,
 		width:       width,
 		height:      height,
 		dy:          0,
@@ -40,7 +49,7 @@ func (p Pipe) Draw(screen *ebiten.Image) {
 	opts := &ebiten.DrawImageOptions{}
 	if p.orientation == "top" {
 		opts.GeoM.Scale(1, -1)
-		// opts.GeoM.Translate(0, float64(p.height))
+		opts.GeoM.Translate(0, float64(p.height))
 	}
 	opts.GeoM.Translate(float64(p.x), float64(p.y))
 	screen.DrawImage(p.image, opts)

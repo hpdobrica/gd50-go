@@ -28,6 +28,8 @@ var backgroundOffset float64
 
 const dt float64 = 1 / 60.0
 
+var scrolling = true
+
 var bird Bird
 
 var pipeManager PipeManager
@@ -39,16 +41,28 @@ func (g Game) Update() error {
 		os.Exit(0)
 	}
 
-	groundOffset = math.Mod(groundOffset+(groundSpeed*dt), screenWidth)
-	backgroundOffset = math.Mod(backgroundOffset+(backgroundSpeed*dt), backgroundLoopingPoint)
+	if scrolling {
+		groundOffset = math.Mod(groundOffset+(groundSpeed*dt), screenWidth)
+		backgroundOffset = math.Mod(backgroundOffset+(backgroundSpeed*dt), backgroundLoopingPoint)
 
-	bird.Update()
+		bird.Update()
 
-	for _, pipePair := range pipeManager.pipePairs {
-		pipePair.Update()
+		for _, pipePair := range pipeManager.pipePairs {
+			pipePair.Update()
+			if bird.Collides(*pipePair.top) || bird.Collides(*pipePair.bottom) {
+				scrolling = false
+			}
+		}
+
+		ground := assets.getImage("assets/ground.png")
+		_, groundHeight := ground.Size()
+		if bird.y+float64(bird.height) > float64(screenHeight-groundHeight) {
+			scrolling = false
+		}
+
+		pipeManager.ManageLifecycle()
+
 	}
-
-	pipeManager.ManageLifecycle()
 
 	return nil
 }
